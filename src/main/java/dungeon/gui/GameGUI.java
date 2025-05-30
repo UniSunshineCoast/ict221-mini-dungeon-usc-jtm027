@@ -8,6 +8,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
+import java.util.Objects;
+
 /**
  * GUI for the Maze Runner Game.
  *
@@ -17,7 +19,7 @@ public class GameGUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        BorderPane root = FXMLLoader.load(getClass().getResource("game_gui.fxml"));
+        BorderPane root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("game_gui.fxml")));
 
         primaryStage.setScene(new Scene(root, 800, 800));
         primaryStage.setTitle("MiniDungeon Game");
