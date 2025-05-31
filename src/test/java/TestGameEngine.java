@@ -114,8 +114,21 @@ public class TestGameEngine {
         GameEngine ge = new GameEngine(10, 3);
         int ladderX = ge.getLadderX();
         int ladderY = ge.getLadderY();
+        // Move player to ladder position
         ge.getMap()[ge.getEntryX()][ge.getEntryY()].setItem(null);
         ge.getMap()[ladderX][ladderY].setItem(ge.getPlayer());
+        // Set player coordinates to ladder
+        // (simulate player standing on ladder)
+        try {
+            java.lang.reflect.Field px = GameEngine.class.getDeclaredField("playerX");
+            java.lang.reflect.Field py = GameEngine.class.getDeclaredField("playerY");
+            px.setAccessible(true);
+            py.setAccessible(true);
+            px.setInt(ge, ladderX);
+            py.setInt(ge, ladderY);
+        } catch (Exception e) {
+            fail("Reflection failed: " + e.getMessage());
+        }
         String result = ge.useLadder();
         assertTrue(result.contains("advanced") || result.contains("win"));
     }
@@ -123,7 +136,6 @@ public class TestGameEngine {
     @Test
     void testLadderButtonRequiresPlayerOnLadder() {
         GameEngine ge = new GameEngine(10, 3);
-        // Place player NOT on ladder
         int entryX = ge.getEntryX();
         int entryY = ge.getEntryY();
         int ladderX = ge.getLadderX();
@@ -136,8 +148,133 @@ public class TestGameEngine {
         // Move player to ladder and try again
         ge.getMap()[entryX][entryY].setItem(null);
         ge.getMap()[ladderX][ladderY].setItem(ge.getPlayer());
-        // Simulate pressing the ladder button when on ladder
+        // Set player coordinates to ladder
+        try {
+            java.lang.reflect.Field px = GameEngine.class.getDeclaredField("playerX");
+            java.lang.reflect.Field py = GameEngine.class.getDeclaredField("playerY");
+            px.setAccessible(true);
+            py.setAccessible(true);
+            px.setInt(ge, ladderX);
+            py.setInt(ge, ladderY);
+        } catch (Exception e) {
+            fail("Reflection failed: " + e.getMessage());
+        }
         result = ge.useLadder();
         assertTrue(result.contains("advanced") || result.contains("win"));
+    }
+
+    // --- Additional unit tests for dungeon.engine classes ---
+    @Test
+    void testCellSetAndGetItem() {
+        Cell cell = new Cell();
+        Gold gold = new Gold();
+        cell.setItem(gold);
+        assertEquals(gold, cell.getItem());
+    }
+
+    @Test
+    void testEntryMethods() {
+        Entry entry = new Entry();
+        assertEquals('E', entry.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        assertTrue(entry.onPlayerEnter(ge, 0, 0).contains("entry"));
+    }
+
+    @Test
+    void testGoldMethods() {
+        Gold gold = new Gold();
+        assertEquals('G', gold.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        int x = ge.getEntryX();
+        int y = ge.getEntryY();
+        ge.getMap()[x][y].setItem(gold);
+        String msg = gold.onPlayerEnter(ge, x, y);
+        assertTrue(msg.contains("gold"));
+    }
+
+    @Test
+    void testHealPotMethods() {
+        HealPot pot = new HealPot();
+        assertEquals('H', pot.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        int x = ge.getEntryX();
+        int y = ge.getEntryY();
+        ge.getPlayer().setHp(5);
+        ge.getMap()[x][y].setItem(pot);
+        String msg = pot.onPlayerEnter(ge, x, y);
+        assertTrue(msg.contains("restored"));
+    }
+
+    @Test
+    void testLadderMethods() {
+        Ladder ladder = new Ladder();
+        assertEquals('L', ladder.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        assertTrue(ladder.onPlayerEnter(ge, 0, 0).contains("ladder"));
+    }
+
+    @Test
+    void testMeleeMethods() {
+        Melee melee = new Melee();
+        assertEquals('M', melee.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        int x = ge.getEntryX();
+        int y = ge.getEntryY();
+        ge.getMap()[x][y].setItem(melee);
+        int oldHp = ge.getPlayer().getHp();
+        int oldScore = ge.getPlayer().getScore();
+        String msg = melee.onPlayerEnter(ge, x, y);
+        assertTrue(msg.contains("mutant"));
+        assertTrue(ge.getPlayer().getHp() < oldHp);
+        assertTrue(ge.getPlayer().getScore() > oldScore);
+    }
+
+    @Test
+    void testPlayerMethods() {
+        Player player = new Player(10, 0);
+        assertEquals('P', player.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        String msg = player.onPlayerEnter(ge, 0, 0);
+        assertTrue(msg.contains("already here"));
+        int steps = player.getSteps();
+        player.incrementSteps();
+        assertEquals(steps + 1, player.getSteps());
+    }
+
+    @Test
+    void testRangedMethods() {
+        Ranged ranged = new Ranged();
+        assertEquals('R', ranged.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        int x = ge.getEntryX();
+        int y = ge.getEntryY();
+        ge.getMap()[x][y].setItem(ranged);
+        String msg = ranged.onPlayerEnter(ge, x, y);
+        assertTrue(msg.contains("mutant"));
+        // tryAttackPlayer: test both hit and miss
+        String attackMsg = ranged.tryAttackPlayer(ge, x, y, x + 2, y);
+        assertNotNull(attackMsg);
+    }
+
+    @Test
+    void testTrapMethods() {
+        Trap trap = new Trap();
+        assertEquals('T', trap.getSymbol());
+        GameEngine ge = new GameEngine(10, 3);
+        int x = ge.getEntryX();
+        int y = ge.getEntryY();
+        ge.getMap()[x][y].setItem(trap);
+        int oldHp = ge.getPlayer().getHp();
+        String msg = trap.onPlayerEnter(ge, x, y);
+        assertTrue(msg.contains("trap"));
+        assertTrue(ge.getPlayer().getHp() < oldHp);
+    }
+
+    @Test
+    void testMapIsPathAndGetCell() {
+        Map map = new Map(5, 1);
+        assertTrue(map.isPath(0, 0, 0, 0));
+        assertNotNull(map.getCell(0, 0));
+        assertNull(map.getCell(-1, -1));
     }
 }

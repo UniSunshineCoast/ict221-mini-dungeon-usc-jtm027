@@ -131,6 +131,8 @@ public class Controller {
         stepsLabel.setText(String.valueOf(engine.getPlayer().getSteps()));
         // Update grid
         gridPane.getChildren().clear();
+        gridPane.setHgap(0);
+        gridPane.setVgap(0);
         boolean onLadder = (engine.getPlayer().equals(engine.getMap()[engine.getLadderX()][engine.getLadderY()].getItem()));
         useLadderButton.setDisable(!onLadder);
         if (onLadder && !engine.isGameOver()) {
@@ -147,13 +149,25 @@ public class Controller {
         for (int i = 0; i < engine.getSize(); i++) {
             for (int j = 0; j < engine.getSize(); j++) {
                 String iconPath = engine.getCellIcon(i, j);
-                // If player is on the ladder cell, show player icon
                 if (engine.getPlayer().equals(engine.getMap()[i][j].getItem()) && i == engine.getLadderX() && j == engine.getLadderY()) {
                     iconPath = "/player.png";
                 }
-                // Try both with and without leading slash for image loading
+                StackPane cellPane = new StackPane();
+                cellPane.setPrefSize(53, 53);
+                cellPane.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                // Always add floor.png as the background
+                java.io.InputStream floorStream = getClass().getResourceAsStream("/floor.png");
+                if (floorStream == null) floorStream = getClass().getResourceAsStream("floor.png");
+                if (floorStream != null) {
+                    Image floorImg = new Image(floorStream);
+                    ImageView floorView = new ImageView(floorImg);
+                    floorView.setFitWidth(53);
+                    floorView.setFitHeight(53);
+                    cellPane.getChildren().add(floorView);
+                }
+                // Add the main image if present and not floor
                 Image imgObj = null;
-                if (iconPath != null && !iconPath.isEmpty()) {
+                if (iconPath != null && !iconPath.isEmpty() && !iconPath.contains("floor.png")) {
                     java.io.InputStream imgStream = getClass().getResourceAsStream(iconPath);
                     if (imgStream == null && iconPath.startsWith("/")) {
                         imgStream = getClass().getResourceAsStream(iconPath.substring(1));
@@ -166,19 +180,16 @@ public class Controller {
                 }
                 if (imgObj != null) {
                     ImageView img = new ImageView(imgObj);
-                    img.setFitWidth(48);
-                    img.setFitHeight(48);
-                    StackPane cellPane = new StackPane();
-                    cellPane.setPrefSize(56, 56);
-                    cellPane.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                    if (iconPath != null && (iconPath.endsWith("wall.png") || iconPath.endsWith("/wall.png"))) {
+                        img.setFitWidth(53);
+                        img.setFitHeight(53);
+                    } else {
+                        img.setFitWidth(53);
+                        img.setFitHeight(53);
+                    }
                     cellPane.getChildren().add(img);
-                    gridPane.add(cellPane, j, i);
-                } else {
-                    StackPane cellPane = new StackPane();
-                    cellPane.setPrefSize(56, 56);
-                    cellPane.setStyle("-fx-border-color: black; -fx-background-color: white;");
-                    gridPane.add(cellPane, j, i);
                 }
+                gridPane.add(cellPane, j, i);
             }
         }
         loadAndDisplayTopScores();

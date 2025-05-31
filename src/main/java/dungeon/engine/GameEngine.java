@@ -12,11 +12,11 @@ public class GameEngine {
     private int level = 1;
     private boolean gameOver = false;
     private boolean win = false;
-    private int goldCount;
-    private int trapCount;
-    private int meleeMutantCount;
-    private int rangedMutantCount;
-    private int healthPotionCount;
+    private int goldQuantity;
+    private int trapQuantity;
+    private int meleeQuantity;
+    private int rangedQuantity;
+    private int healthPotionQuantity;
     private int entryX, entryY;
     private int ladderX, ladderY;
 
@@ -27,11 +27,11 @@ public class GameEngine {
      */
     public GameEngine(int size, int difficulty) {
         this.difficulty = difficulty;
-        this.goldCount = 5;
-        this.trapCount = 5;
-        this.meleeMutantCount = 3;
-        this.rangedMutantCount = difficulty; //Only ranged mutants scale
-        this.healthPotionCount = 2;
+        this.goldQuantity = 5;
+        this.trapQuantity = 5;
+        this.meleeQuantity = 3;
+        this.rangedQuantity = difficulty; //Only ranged mutants scale
+        this.healthPotionQuantity = 2;
         map = new Map(size, 1); //Use level 1 layout
         player = new Player(10, 0); //Default HP 10, Score 0
         //Set entry at bottom left
@@ -51,11 +51,11 @@ public class GameEngine {
     }
 
     private void placeRandomItems() {
-        placeRandom(Gold.class, goldCount);
-        placeRandom(Trap.class, trapCount);
-        placeRandom(Melee.class, meleeMutantCount);
-        placeRandom(Ranged.class, rangedMutantCount);
-        placeRandom(HealPot.class, healthPotionCount);
+        placeRandom(Gold.class, goldQuantity);
+        placeRandom(Trap.class, trapQuantity);
+        placeRandom(Melee.class, meleeQuantity);
+        placeRandom(Ranged.class, rangedQuantity);
+        placeRandom(HealPot.class, healthPotionQuantity);
     }
 
     private void placeRandom(Class<? extends CellItem> clazz, int count) {
@@ -78,7 +78,7 @@ public class GameEngine {
 
     public void setDifficulty(int d) {
         this.difficulty = d;
-        this.rangedMutantCount = d;
+        this.rangedQuantity = d;
     }
 
     public int getDifficulty() {
@@ -311,6 +311,8 @@ public class GameEngine {
             out.println(playerX + "," + playerY);
             out.println(player.getHp() + "," + player.getScore() + "," + player.getSteps());
             out.println(level + "," + difficulty);
+            out.println(entryX + "," + entryY);
+            out.println(ladderX + "," + ladderY);
             //Save map items (type and position)
             for (int i = 0; i < map.getSize(); i++) {
                 for (int j = 0; j < map.getSize(); j++) {
@@ -338,6 +340,12 @@ public class GameEngine {
             String[] lvl = in.readLine().split(",");
             level = Integer.parseInt(lvl[0]);
             difficulty = Integer.parseInt(lvl[1]);
+            String[] entry = in.readLine().split(",");
+            entryX = Integer.parseInt(entry[0]);
+            entryY = Integer.parseInt(entry[1]);
+            String[] ladder = in.readLine().split(",");
+            ladderX = Integer.parseInt(ladder[0]);
+            ladderY = Integer.parseInt(ladder[1]);
             map = new Map(getSize(), level);
             for (int i = 0; i < map.getSize(); i++)
                 for (int j = 0; j < map.getSize(); j++)
@@ -375,11 +383,11 @@ public class GameEngine {
             } else {
                 level = 2;
                 this.difficulty += 2;
-                this.goldCount = 5;
-                this.trapCount = 5;
-                this.meleeMutantCount = 3;
-                this.rangedMutantCount = difficulty;
-                this.healthPotionCount = 2;
+                this.goldQuantity = 5;
+                this.trapQuantity = 5;
+                this.meleeQuantity = 3;
+                this.rangedQuantity = difficulty;
+                this.healthPotionQuantity = 2;
                 map = new Map(getSize(), 2);
                 entryX = ladderX; entryY = ladderY;
                 do {
@@ -425,7 +433,13 @@ public class GameEngine {
         //Show player if present
         if (playerX == i && playerY == j) return "/player.png";
         //Show entry/ladder icons based on coordinates
-        if (i == entryX && j == entryY) return "/entry.png";
+        if (i == entryX && j == entryY) {
+            if (level == 1) {
+                return "/entry.png";
+            } else {
+                return "/trapdoor.png";
+            }
+        }
         if (i == ladderX && j == ladderY) return "/ladder.png";
         //Otherwise, show item icon
         CellItem item = map.getCell(i, j).getItem();
